@@ -78,9 +78,11 @@ app.get('/albums-cached/:id', async (req, res) => {
                 
                 if(response.data.length > 0)
                 {
-                    redisClient.set(id, JSON.stringify(album));
+                    redisClient.set(id, JSON.stringify(album), {
+                        EX: 60, // 1 minute TTL
+                        GET: true
+                    });
                     
-
                     console.log("Album successfully retrieved from the API");
             
                     res.status(200).send({
