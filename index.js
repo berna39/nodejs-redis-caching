@@ -2,6 +2,7 @@ const app = require('express')();
 const dotenv = require('dotenv');
 const axios = require('axios');
 const redis = require('redis');
+const database = require('./database/db');
 
 dotenv.config();
 
@@ -11,6 +12,7 @@ const API_URL = "https://jsonplaceholder.typicode.com/albums/";
 const redisClient = redis.createClient({
     url: process.env.REDIS_URL
 });
+
 redisClient.connect();
 
 app.get('/', (_, res) => { 
@@ -102,6 +104,12 @@ app.get('/albums-cached/:id', async (req, res) => {
     } catch (error) {
         res.status(500).send({ error: error.message });
     }
+});
+
+app.get('/countries/:name', async (req, res)=>{
+
+
+
 });
 
 app.listen(PORT, (err) => {
