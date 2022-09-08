@@ -6,10 +6,11 @@ const redis = require('redis');
 dotenv.config();
 
 const PORT = process.env.APP_PORT || 3000;
-const REDIS_PORT = process.env.REDIS_PORT || 6379;
 const API_URL = "https://jsonplaceholder.typicode.com/albums/";
 
-const redisClient = redis.createClient(REDIS_PORT);
+const redisClient = redis.createClient({
+    url: process.env.REDIS_URL
+});
 redisClient.connect();
 
 app.get('/', (_, res) => { 
@@ -58,7 +59,6 @@ app.get('/albums-cached/:id', async (req, res) => {
     try {
 
         const album = await redisClient.get(id);
-        console.log(album);
 
         if(album !== null)
         {
@@ -73,22 +73,36 @@ app.get('/albums-cached/:id', async (req, res) => {
         {
             axios.get(`${API_URL}?id=${id}`).then((response) => {
 
-                const album = response.data;
-                redisClient.set(id, JSON.stringify(album));
                 endDate = new Date();
+                const album = response.data;
+                
+                if(response.data.length > 0)
+                {
+                    redisClient.set(id, JSON.stringify(album));
+                    
 
-                console.log("Album successfully retrieved from the API");
-        
-                res.status(200).send({
-                    data: album,
-                    time: endDate.getTime() - startDate.getTime()
-                });
+                    console.log("Album successfully retrieved from the API");
+            
+                    res.status(200).send({
+                        data: album,
+                        time: endDate.getTime() - startDate.getTime()
+                    });
+                }
+                else
+                {
+                    res.status(200).send({
+                        data: [],
+                        time: endDate.getTime() - startDate.getTime()
+                    });
+                }
             });
         }
-
     } catch (error) {
         res.status(500).send({ error: error.message });
     }
 });
 
-app.listen(PORT, () => console.log(`Server up and running`));
+app.listen(PORT, (err) => {
+    if(err) console.log(err);
+    else console.log(`Server up and running`);
+});
